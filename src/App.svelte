@@ -10,12 +10,35 @@
 }`
   let editorElement
   let editor
-  let steps = []
+  let steps = [
+    {
+      type: 'selection',
+      start: {line: 0, ch: 0},
+      end: {line: 0, ch: 8}
+    },
+    {
+      type: 'selection',
+      start: {line: 0, ch: 9},
+      end: {line: 0, ch: 12}
+    },
+    {
+      type: 'remove',
+      start: {line: 0, ch: 13},
+      end: {line: 0, ch: 17}
+    },
+    {
+      type: 'add',
+      text: 'x, y',
+      start: {line: 0, ch: 13},
+      end: {line: 0, ch: 13}
+    }
+  ]
 
   onMount(() => {
     editor = CodeMirror(editorElement, {
       mode,
-      value: code
+      value: code,
+      lineNumbers: true
     })
   })
 
@@ -30,13 +53,36 @@
   }
 
   function playback() {
+    let mark
     // set starting point to original code
     editor.setValue(code)
 
     steps.forEach((step, i) => {
       setTimeout(() => {
-        if (step.type == "selection") {
-          editor.setSelection(step.start, step.end)
+        switch (step.type) {
+          case "selection":
+            editor.setSelection(step.start, step.end)
+            break
+          case "remove":
+            editor.setCursor(step.start)
+            mark = editor.markText(step.start, step.end, {className: 'removing'})
+            setTimeout(() => {
+              mark.clear()
+              editor.setSelection(step.start, step.end)
+              editor.replaceSelection("")
+            }, 700)
+            break
+
+          case "add":
+            editor.setCursor(step.start)
+            editor.replaceSelection(step.text)
+            mark = editor.markText(step.start, {ch: step.end.ch + step.text.length, line: step.start.line}, {className: 'adding'})
+
+            setTimeout(() => {
+              mark.clear()
+              editor.setSelection(step.start)
+            }, 700)
+            break
         }
       }, i*1000)
     })
@@ -55,5 +101,13 @@
 <style>
   .editor {
     font-size: 2rem;
+  }
+  :global(.removing), :global(.removing span) {
+    background: red;
+    color: white !important;
+  }
+  :global(.adding), :global(.adding span) {
+    background: green;
+    color: white !important;
   }
 </style>
