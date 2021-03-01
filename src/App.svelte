@@ -10,7 +10,36 @@
 }`
   let editorElement
   let editor
+  let typewriterIndex = 0
   let steps = [
+    {
+      type: 'add',
+      start: {line: 2, ch: 1},
+      text: '\n// adding text in one shot',
+    },
+    {
+      type: 'add',
+      start: {line: 3, ch: 27},
+      text: '\n',
+    },
+    {
+      type: 'add',
+      start: {line: 4, ch: 0},
+      text: '// adding text with typewriter',
+      typewriter: true
+    },
+    {
+      type: 'add',
+      start: {line: 4, ch: 30},
+      text: '\n',
+    },
+    {
+      type: 'add',
+      start: {line: 5, ch: 0},
+      text: 'let syntaxHighlightWorking = true || false // yay!',
+      typewriter: true
+    },
+
     {
       type: 'selection',
       start: {line: 0, ch: 0},
@@ -74,20 +103,40 @@
             break
 
           case "add":
+            typewriterIndex = 0
             editor.setCursor(step.start)
-            editor.replaceSelection(step.text)
-            mark = editor.markText(step.start, {ch: step.end.ch + step.text.length, line: step.start.line}, {className: 'adding'})
+            if (step.typewriter) {
+              addNextLetter(step, null, 0)
+            }
+            else {
+              editor.replaceSelection(step.text)
+              mark = editor.markText(step.start, {ch: step.start.ch + step.text.length, line: step.start.line}, {className: 'adding'})
 
-            setTimeout(() => {
-              mark.clear()
-              editor.setSelection(step.start)
-            }, 700)
+              setTimeout(() => {
+                mark.clear()
+                editor.setSelection(step.start)
+              }, 700)
+            }
             break
         }
       }, i*1000)
     })
 
     setTimeout(() => editor.setCursor(0), steps.length * 1000)
+  }
+
+  function addNextLetter(step, mark, index) {
+    if (mark) mark.clear()
+
+    editor.setCursor({ch: step.start.ch + index, line: step.start.line})
+    editor.replaceSelection(step.text[index])
+    mark = editor.markText(step.start, {ch: step.start.ch + index + 1, line: step.start.line}, {className: 'adding'})
+
+    if (index < step.text.length-1) {
+      setTimeout(() => addNextLetter(step, mark, index + 1), 600/step.text.length)
+    } else {
+      setTimeout(() => mark.clear(), 400)
+    }
   }
 </script>
 
