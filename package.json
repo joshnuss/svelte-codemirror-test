@@ -7,6 +7,9 @@
     "format": "eslint --fix"
   },
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.0.20",
+    "playwright": "^1.9.1",
+    "playwright-video": "^2.4.0",
     "svelte": "^3.31.2"
   },
   "devDependencies": {

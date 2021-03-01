@@ -94,7 +94,7 @@
 <div class="editor" bind:this={editorElement}/>
 
 <button on:click={record}>Record Selection</button>
-<button on:click={playback}>Playback</button>
+<button on:click={playback} class="play">Playback</button>
 
 <pre>steps = {JSON.stringify(steps, null, 2)}</pre>
 
@@ -103,11 +103,9 @@
     font-size: 2rem;
   }
   :global(.removing), :global(.removing span) {
-    background: red;
-    color: white !important;
+    background: #ffd0d0;
   }
   :global(.adding), :global(.adding span) {
-    background: green;
-    color: white !important;
+    background: #b6ffb6;
   }
 </style>
