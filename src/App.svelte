@@ -11,12 +11,16 @@
 }`
   let editorElement
   let editor
-  let typewriterIndex = 0
   let steps = [
     {
       type: 'add',
       start: {line: 2, ch: 1},
-      text: '\n// adding text in one shot',
+      text: '\n',
+    },
+    {
+      type: 'add',
+      start: {line: 3, ch: 0},
+      text: '// adding text in one shot',
     },
     {
       type: 'add',
@@ -54,13 +58,15 @@
     {
       type: 'remove',
       start: {line: 0, ch: 13},
-      end: {line: 0, ch: 17}
+      length: 4,
+      typewriter: true
     },
     {
       type: 'add',
       text: 'x, y',
       start: {line: 0, ch: 13},
-      end: {line: 0, ch: 13}
+      end: {line: 0, ch: 13},
+      typewriter: true
     }
   ]
 
@@ -94,17 +100,25 @@
             editor.setSelection(step.start, step.end)
             break
           case "remove":
-            editor.setCursor(step.start)
-            mark = editor.markText(step.start, step.end, {className: 'removing'})
-            setTimeout(() => {
-              mark.clear()
-              editor.setSelection(step.start, step.end)
-              editor.replaceSelection("")
-            }, 700)
+            const end = {line: step.start.line, ch: step.start.ch + step.length}
+            mark = editor.markText(step.start, end, {className: 'removing'})
+
+            if (step.typewriter) {
+              editor.setCursor(end)
+              removeNextLetter(step, null, step.length)
+            }
+            else {
+              editor.setCursor(step.start)
+
+              setTimeout(() => {
+                mark.clear()
+                editor.setSelection(step.start, end)
+                editor.replaceSelection("")
+              }, 700)
+            }
             break
 
           case "add":
-            typewriterIndex = 0
             editor.setCursor(step.start)
             if (step.typewriter) {
               addNextLetter(step, null, 0)
@@ -139,11 +153,26 @@
       setTimeout(() => mark.clear(), 400)
     }
   }
+
+  function removeNextLetter(step, mark, index) {
+    if (mark) mark.clear()
+
+    editor.execCommand('delCharBefore')
+    mark = editor.markText({ch: step.start.ch - index, line: step.start.line}, step.start, {className: 'adding'})
+
+    if (index > 1) {
+      setTimeout(() => removeNextLetter(step, mark, index - 1), 600/step.length)
+    } else {
+      setTimeout(() => mark.clear(), 400)
+    }
+  }
 </script>
 
-<Screen>
-  <div class="editor" bind:this={editorElement}/>
-</Screen>
+<div class="container">
+  <Screen>
+    <div class="editor" bind:this={editorElement}/>
+  </Screen>
+</div>
 
 <button on:click={record}>Record Selection</button>
 <button on:click={playback} class="play">Playback</button>
@@ -153,6 +182,9 @@
 <style>
   .editor {
     font-size: 1.2rem;
+  }
+  .container {
+    max-width: 800px;
   }
   :global(.removing), :global(.removing span) {
     background: #ffd0d0;
