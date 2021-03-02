@@ -15,6 +15,22 @@
 
   let steps = [
     {
+      type: 'selection',
+      css: 'background: purple; color:white;',
+      selections: [
+        {start: {line: 0, ch: 13}, end: {line: 0, ch: 14}},
+        {start: {line: 1, ch: 9}, end: {line: 1, ch: 10}},
+      ]
+    },
+    {
+      type: 'selection',
+      css: 'background: turquoise; color:#444;',
+      selections: [
+        {start: {line: 0, ch: 16}, end: {line: 0, ch: 17}},
+        {start: {line: 1, ch: 13}, end: {line: 1, ch: 14}},
+      ]
+    },
+    {
       type: 'add',
       start: {line: 2, ch: 1},
       text: '\n',
@@ -99,9 +115,17 @@
       setTimeout(() => {
         switch (step.type) {
           case "selection":
+            clearMarks()
             if (step.selections) {
+              step.selections.forEach(selection => {
+                editor.markText(selection.start, selection.end, {css: step.css, className: step.class})
+              })
             } else  {
               editor.setSelection(step.start, step.end)
+
+              if (step.css || step.class) {
+                editor.markText(step.start, step.end, {css: step.css, className: step.class})
+              }
             }
             break
           case "remove":
