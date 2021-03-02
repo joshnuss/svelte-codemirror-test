@@ -166,7 +166,10 @@
       }, i*1000)
     })
 
-    setTimeout(() => editor.setCursor(0), steps.length * 1000)
+    setTimeout(() => {
+      editor.setCursor(0)
+      clearMarks()
+    }, steps.length * 1000)
   }
 
   function addNextLetter(step, index) {
