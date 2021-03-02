@@ -1,4 +1,5 @@
 <script>
+  import Screen from './Screen.svelte'
   import CodeMirror from 'codemirror'
   import 'codemirror/mode/javascript/javascript'
   import {onMount} from 'svelte'
@@ -36,7 +37,7 @@
     {
       type: 'add',
       start: {line: 5, ch: 0},
-      text: 'let syntaxHighlightWorking = true || false // yay!',
+      text: 'let syntaxHighlight = true // yay!',
       typewriter: true
     },
 
@@ -140,7 +141,9 @@
   }
 </script>
 
-<div class="editor" bind:this={editorElement}/>
+<Screen>
+  <div class="editor" bind:this={editorElement}/>
+</Screen>
 
 <button on:click={record}>Record Selection</button>
 <button on:click={playback} class="play">Playback</button>
@@ -149,7 +152,7 @@
 
 <style>
   .editor {
-    font-size: 2rem;
+    font-size: 1.2rem;
   }
   :global(.removing), :global(.removing span) {
     background: #ffd0d0;
