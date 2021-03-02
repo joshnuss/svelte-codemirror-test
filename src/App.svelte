@@ -3,11 +3,35 @@
   import CodeMirror from 'codemirror'
   import 'codemirror/mode/javascript/javascript'
   import {onMount} from 'svelte'
+  import { tweened } from 'svelte/motion'
+
+  const scrollX = tweened(0, {duration: 800})
+  const scrollY = tweened(0, {duration: 800})
 
   const mode = 'javascript'
   const code =
 `function add(a, b) {
   return a + b
+}
+
+function subtract(a, b) {
+  return a - b
+}
+
+function multiple(a, b) {
+  return a * b
+}
+
+function divide(a, b) {
+  return a / b
+}
+
+function double(a) {
+  return multiply(a, 2)
+}
+
+function triple(a) {
+  return multiply(a, 3)
 }`
   let editorElement
   let editor
@@ -15,77 +39,17 @@
 
   let steps = [
     {
-      type: 'selection',
-      css: 'background: purple; color:white;',
-      selections: [
-        {start: {line: 0, ch: 13}, end: {line: 0, ch: 14}},
-        {start: {line: 1, ch: 9}, end: {line: 1, ch: 10}},
-      ]
+      type: 'scroll',
+      y: 200
     },
     {
-      type: 'selection',
-      css: 'background: turquoise; color:#444;',
-      selections: [
-        {start: {line: 0, ch: 16}, end: {line: 0, ch: 17}},
-        {start: {line: 1, ch: 13}, end: {line: 1, ch: 14}},
-      ]
+      type: 'scroll',
+      y: 30
     },
     {
-      type: 'add',
-      start: {line: 2, ch: 1},
-      text: '\n',
+      type: 'scroll',
+      y: 120
     },
-    {
-      type: 'add',
-      start: {line: 3, ch: 0},
-      text: '// adding text in one shot',
-    },
-    {
-      type: 'add',
-      start: {line: 3, ch: 27},
-      text: '\n',
-    },
-    {
-      type: 'add',
-      start: {line: 4, ch: 0},
-      text: '// adding text with typewriter',
-      typewriter: true
-    },
-    {
-      type: 'add',
-      start: {line: 4, ch: 30},
-      text: '\n',
-    },
-    {
-      type: 'add',
-      start: {line: 5, ch: 0},
-      text: 'let syntaxHighlight = true // yay!',
-      typewriter: true
-    },
-
-    {
-      type: 'selection',
-      start: {line: 0, ch: 0},
-      end: {line: 0, ch: 8}
-    },
-    {
-      type: 'selection',
-      start: {line: 0, ch: 9},
-      end: {line: 0, ch: 12}
-    },
-    {
-      type: 'remove',
-      start: {line: 0, ch: 13},
-      length: 4,
-      typewriter: true
-    },
-    {
-      type: 'add',
-      text: 'x, y',
-      start: {line: 0, ch: 13},
-      end: {line: 0, ch: 13},
-      typewriter: true
-    }
   ]
 
   onMount(() => {
@@ -95,6 +59,10 @@
       lineNumbers: true
     })
   })
+
+  $: if (editor) {
+    editor.scrollTo($scrollX, $scrollY)
+  }
 
   function record() {
     if (editor.getSelection() == "")
@@ -114,6 +82,10 @@
     steps.forEach((step, i) => {
       setTimeout(() => {
         switch (step.type) {
+          case "scroll":
+            if (step.x) $scrollX = step.x
+            if (step.y) $scrollY = step.y
+            break
           case "selection":
             clearMarks()
             if (step.selections) {
