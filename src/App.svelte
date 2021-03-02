@@ -11,6 +11,8 @@
 }`
   let editorElement
   let editor
+  let marks = []
+
   let steps = [
     {
       type: 'add',
@@ -89,7 +91,7 @@
   }
 
   function playback() {
-    let mark
+    marks = []
     // set starting point to original code
     editor.setValue(code)
 
@@ -97,21 +99,24 @@
       setTimeout(() => {
         switch (step.type) {
           case "selection":
-            editor.setSelection(step.start, step.end)
+            if (step.selections) {
+            } else  {
+              editor.setSelection(step.start, step.end)
+            }
             break
           case "remove":
             const end = {line: step.start.line, ch: step.start.ch + step.length}
-            mark = editor.markText(step.start, end, {className: 'removing'})
+            editor.markText(step.start, end, {className: 'removing'})
 
             if (step.typewriter) {
               editor.setCursor(end)
-              removeNextLetter(step, null, step.length)
+              removeNextLetter(step, step.length)
             }
             else {
               editor.setCursor(step.start)
 
               setTimeout(() => {
-                mark.clear()
+                clearMarks()
                 editor.setSelection(step.start, end)
                 editor.replaceSelection("")
               }, 700)
@@ -121,14 +126,14 @@
           case "add":
             editor.setCursor(step.start)
             if (step.typewriter) {
-              addNextLetter(step, null, 0)
+              addNextLetter(step, 0)
             }
             else {
               editor.replaceSelection(step.text)
-              mark = editor.markText(step.start, {ch: step.start.ch + step.text.length, line: step.start.line}, {className: 'adding'})
+              editor.markText(step.start, {ch: step.start.ch + step.text.length, line: step.start.line}, {className: 'adding'})
 
               setTimeout(() => {
-                mark.clear()
+                clearMarks()
                 editor.setSelection(step.start)
               }, 700)
             }
@@ -140,31 +145,37 @@
     setTimeout(() => editor.setCursor(0), steps.length * 1000)
   }
 
-  function addNextLetter(step, mark, index) {
-    if (mark) mark.clear()
+  function addNextLetter(step, index) {
+    clearMarks()
 
     editor.setCursor({ch: step.start.ch + index, line: step.start.line})
     editor.replaceSelection(step.text[index])
-    mark = editor.markText(step.start, {ch: step.start.ch + index + 1, line: step.start.line}, {className: 'adding'})
+    editor.markText(step.start, {ch: step.start.ch + index + 1, line: step.start.line}, {className: 'adding'})
 
     if (index < step.text.length-1) {
-      setTimeout(() => addNextLetter(step, mark, index + 1), 600/step.text.length)
+      setTimeout(() => addNextLetter(step, index + 1), 600/step.text.length)
     } else {
-      setTimeout(() => mark.clear(), 400)
+      setTimeout(() => clearMarks(), 400)
     }
   }
 
-  function removeNextLetter(step, mark, index) {
-    if (mark) mark.clear()
+  function removeNextLetter(step, index) {
+    clearMarks()
 
     editor.execCommand('delCharBefore')
-    mark = editor.markText({ch: step.start.ch - index, line: step.start.line}, step.start, {className: 'adding'})
+    editor.markText(step.start, {ch: step.start.ch + index - 1, line: step.start.line}, {className: 'removing'})
 
     if (index > 1) {
-      setTimeout(() => removeNextLetter(step, mark, index - 1), 600/step.length)
+      setTimeout(() => removeNextLetter(step, index - 1), 600/step.length)
     } else {
-      setTimeout(() => mark.clear(), 400)
+      setTimeout(() => clearMarks(), 400)
     }
+  }
+
+  function clearMarks() {
+    editor
+      .getAllMarks()
+      .forEach(mark => mark.clear())
   }
 </script>
 
