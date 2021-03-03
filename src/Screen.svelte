@@ -16,14 +16,14 @@
   .terminal {
 		font-family: monospace;
 		font-size: 1.5rem;
-		background: white;
-    border: solid 2px #ccc;
+    border: solid 2px var(--border-color);
 		padding: 1rem;
 		margin: 5rem;
 		border-radius: 0.5rem;
-		color: #b8b8b8;
-		box-shadow: 2px 2px #eee;
-		min-height: 20rem
+    min-height: 20rem;
+    background: var(--background-color);
+		box-shadow: 2px 2px var(--medium-color);
+    color: var(--text-color)
 	}
 
 	.terminal .bar {

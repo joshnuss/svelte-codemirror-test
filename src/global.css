@@ -1,1 +1,28 @@
 /* place global styles here */
+body.light-theme {
+  --background-color: white;
+  --medium-color: #ccc;
+  --text-color: #222;
+  --cursor-color: #7e7;
+  --border-color: #ccc;
+}
+body.dark-theme {
+  --background-color: #222;
+  --medium-color: #555;
+  --text-color: white;
+  --cursor-color: #7e7;
+  --border-color: #666;
+}
+body {
+  background: var(--background-color);
+  color: var(--text-color);
+}
+
+button, select {
+  background: var(--background-color);
+  color: var(--text-color);
+  font-size: 1.2rem;
+  border: solid 1px var(--medium-color);
+  padding: 0.5rem 1rem;
+  border-radius: 3px;
+}

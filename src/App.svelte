@@ -10,6 +10,7 @@
   const scrollY = tweened(0, {duration: 800})
 
   let language = 'javascript'
+  let theme = 'light'
   const code = {
       javascript:
 `function add(a, b) {
@@ -158,6 +159,13 @@ end`
     editor.scrollTo($scrollX, $scrollY)
   }
 
+  $: {
+    const classList = document.body.classList
+
+    classList.remove('dark-theme', 'light-theme')
+    classList.add(`${theme}-theme`)
+  }
+
   function createEditor() {
     if (editor)
       editorElement.innerHTML = ''
@@ -296,6 +304,11 @@ end`
   {#each ['javascript', 'ruby'] as lang}
     <option>{lang}</option>
   {/each}
+</select>
+
+<select bind:value={theme}>
+  <option>light</option>
+  <option>dark</option>
 </select>
 
 <pre>steps = {JSON.stringify(steps, null, 2)}</pre>

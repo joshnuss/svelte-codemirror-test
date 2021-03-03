@@ -4,8 +4,9 @@
   /* Set height, width, borders, and global font properties here */
   font-family: monospace;
   height: 300px;
-  color: black;
   direction: ltr;
+  color: var(--text-color);
+  background: var(--background-color);
 }
 
 /* PADDING */
@@ -19,13 +20,13 @@
 }
 
 .CodeMirror-scrollbar-filler, .CodeMirror-gutter-filler {
-  background-color: white; /* The little square between H and V scrollbars */
+  background-color: var(--background-color); /* The little square between H and V scrollbars */
 }
 
 /* GUTTER */
 
 .CodeMirror-gutters {
-  border-right: 1px solid #eee;
+  border-right: 1px solid var(--medium-color);
   background-color: transparent;
   white-space: nowrap;
 }
@@ -38,30 +39,30 @@
   white-space: nowrap;
 }
 
-.CodeMirror-guttermarker { color: black; }
+.CodeMirror-guttermarker { color: var(--text-color); }
 .CodeMirror-guttermarker-subtle { color: #999; }
 
 /* CURSOR */
 
 .CodeMirror-cursor {
-  border-left: 1px solid black;
+  border-left: 1px solid var(--text-color);
   border-right: none;
   width: 0;
 }
 /* Shown when moving in bi-directional text */
 .CodeMirror div.CodeMirror-secondarycursor {
-  border-left: 1px solid silver;
+  border-left: 1px solid var(--medium-color);
 }
 .cm-fat-cursor .CodeMirror-cursor {
   width: auto;
   border: 0 !important;
-  background: #7e7;
+  background: var(--cursor-color);
 }
 .cm-fat-cursor div.CodeMirror-cursors {
   z-index: 1;
 }
 .cm-fat-cursor-mark {
-  background-color: rgba(20, 255, 20, 0.5);
+  background-color: var(--cursor-color);
   -webkit-animation: blink 1.06s steps(1) infinite;
   -moz-animation: blink 1.06s steps(1) infinite;
   animation: blink 1.06s steps(1) infinite;
@@ -72,7 +73,7 @@
   -webkit-animation: blink 1.06s steps(1) infinite;
   -moz-animation: blink 1.06s steps(1) infinite;
   animation: blink 1.06s steps(1) infinite;
-  background-color: #7e7;
+  background-color: var(--cursor-color);
 }
 @-moz-keyframes blink {
   0% {}
@@ -101,7 +102,7 @@
   overflow: hidden;
 }
 .CodeMirror-ruler {
-  border-left: 1px solid #ccc;
+  border-left: 1px solid var(--medium-color);
   top: 0; bottom: 0;
   position: absolute;
 }
@@ -159,7 +160,6 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #a22;}
 .CodeMirror {
   position: relative;
   overflow: hidden;
-  background: white;
 }
 
 .CodeMirror-scroll {
@@ -197,7 +197,7 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #a22;}
 
 .CodeMirror ::-webkit-scrollbar-thumb {
   border-radius: 10px;
-  background: #ddd;
+  background: var(--medium-color);
 }
 
 .CodeMirror-vscrollbar {
