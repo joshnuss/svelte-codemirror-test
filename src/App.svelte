@@ -2,14 +2,16 @@
   import Screen from './Screen.svelte'
   import CodeMirror from 'codemirror'
   import 'codemirror/mode/javascript/javascript'
+  import 'codemirror/mode/ruby/ruby'
   import {onMount} from 'svelte'
   import { tweened } from 'svelte/motion'
 
   const scrollX = tweened(0, {duration: 800})
   const scrollY = tweened(0, {duration: 800})
 
-  const mode = 'javascript'
-  const code =
+  let language = 'javascript'
+  const code = {
+      javascript:
 `function add(a, b) {
   return a + b
 }
@@ -32,7 +34,32 @@ function double(a) {
 
 function triple(a) {
   return multiply(a, 3)
-}`
+}`,
+      ruby:
+`def add(a, b)
+  a + b
+end
+
+def subtract(a, b)
+  a - b
+end
+
+def multiple(a, b)
+  a * b
+end
+
+def divide(a, b)
+  a / b
+end
+
+def double(a)
+  multiply(a, 2)
+end
+
+def triple(a)
+  multiply(a, 3)
+end`
+}
   let editorElement
   let editor
   let marks = []
@@ -48,20 +75,98 @@ function triple(a) {
     },
     {
       type: 'scroll',
-      y: 120
+      y: 0
     },
+    {
+      type: 'selection',
+      css: 'background: purple; color:white;',
+      selections: [
+        {start: {line: 0, ch: 13}, end: {line: 0, ch: 14}},
+        {start: {line: 1, ch: 9}, end: {line: 1, ch: 10}},
+      ]
+    },
+    {
+      type: 'selection',
+      css: 'background: turquoise; color:#444;',
+      selections: [
+        {start: {line: 0, ch: 16}, end: {line: 0, ch: 17}},
+        {start: {line: 1, ch: 13}, end: {line: 1, ch: 14}},
+      ]
+    },
+    {
+      type: 'add',
+      start: {line: 2, ch: 1},
+      text: '\n',
+    },
+    {
+      type: 'add',
+      start: {line: 3, ch: 0},
+      text: '// adding text in one shot',
+    },
+    {
+      type: 'add',
+      start: {line: 3, ch: 27},
+      text: '\n',
+    },
+    {
+      type: 'add',
+      start: {line: 4, ch: 0},
+      text: '// adding text with typewriter',
+      typewriter: true
+    },
+    {
+      type: 'add',
+      start: {line: 4, ch: 30},
+      text: '\n',
+    },
+    {
+      type: 'add',
+      start: {line: 5, ch: 0},
+      text: 'let syntaxHighlight = true // yay!',
+      typewriter: true
+    },
+    {
+      type: 'selection',
+      start: {line: 0, ch: 0},
+      end: {line: 0, ch: 8}
+    },
+    {
+      type: 'selection',
+      start: {line: 0, ch: 9},
+      end: {line: 0, ch: 12}
+    },
+    {
+      type: 'remove',
+      start: {line: 0, ch: 13},
+      length: 4,
+      typewriter: true
+    },
+    {
+      type: 'add',
+      text: 'x, y',
+      start: {line: 0, ch: 13},
+      end: {line: 0, ch: 13},
+      typewriter: true
+    }
   ]
 
   onMount(() => {
-    editor = CodeMirror(editorElement, {
-      mode,
-      value: code,
-      lineNumbers: true
-    })
+    createEditor()
   })
 
   $: if (editor) {
     editor.scrollTo($scrollX, $scrollY)
+  }
+
+  function createEditor() {
+    if (editor)
+      editorElement.innerHTML = ''
+
+    editor = CodeMirror(editorElement, {
+      mode: language,
+      value: code[language],
+      lineNumbers: true
+    })
   }
 
   function record() {
@@ -77,7 +182,7 @@ function triple(a) {
   function playback() {
     marks = []
     // set starting point to original code
-    editor.setValue(code)
+    editor.setValue(code[language])
 
     steps.forEach((step, i) => {
       setTimeout(() => {
@@ -186,6 +291,12 @@ function triple(a) {
 
 <button on:click={record}>Record Selection</button>
 <button on:click={playback} class="play">Playback</button>
+
+<select bind:value={language} on:change={createEditor}>
+  {#each ['javascript', 'ruby'] as lang}
+    <option>{lang}</option>
+  {/each}
+</select>
 
 <pre>steps = {JSON.stringify(steps, null, 2)}</pre>
 
