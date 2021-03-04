@@ -165,14 +165,28 @@ function triple(a) {
     steps = [...steps, {type: 'selection', start, end}]
   }
 
+  function dispatchEvent(name, detail) {
+    const event = new CustomEvent(name, {detail})
+    editorElement.dispatchEvent(event)
+  }
+
   function playback() {
     marks = []
     // set starting point to original code
     editor.setValue(code)
 
+    dispatchEvent("timelinestart")
+
     steps.forEach((step, i) => {
       setTimeout(() => {
+        if (current) {
+          dispatchEvent("stepend", step)
+        }
+
         current = step
+
+        dispatchEvent("stepstart", step)
+
         switch (step.type) {
           case "scroll":
             if (step.x) $scrollX = step.x
@@ -236,6 +250,7 @@ function triple(a) {
       current = null
       editor.setCursor(0)
       clearMarks()
+      dispatchEvent("timelineend")
     }, steps.length * 3000)
   }
 
@@ -277,11 +292,25 @@ function triple(a) {
       .getAllMarks()
       .forEach(mark => mark.clear())
   }
+
+  function stepStart(e) {
+    console.log('step:start', e.detail)
+  }
+  function stepEnd(e) {
+    console.log('step:end', e.detail)
+  }
+  function timelineStart(e) {
+    console.log('timeline:start')
+  }
+  function timelineEnd(e) {
+    console.log('timeline:end')
+  }
+
 </script>
 
 <div class="container">
   <Screen>
-    <div class="editor" bind:this={editorElement}/>
+    <div class="editor" bind:this={editorElement} on:stepstart={stepStart} on:stepend={stepEnd} on:timelinestart={timelineStart} on:timelineEnd={timelineEnd}/>
     <div class="annotation-container">
       {#if current && current.caption}
         {#key current.caption}
