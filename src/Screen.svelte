@@ -23,7 +23,8 @@
     min-height: 20rem;
     background: var(--background-color);
 		box-shadow: 2px 2px var(--medium-color);
-    color: var(--text-color)
+    color: var(--text-color);
+    position: relative;
 	}
 
 	.terminal .bar {

@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.0.20",
+    "marked": "^2.0.1",
     "playwright": "^1.9.1",
     "playwright-video": "^2.4.0",
     "svelte": "^3.31.2"

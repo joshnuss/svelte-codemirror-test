@@ -3,17 +3,19 @@
   import CodeMirror from 'codemirror'
   import 'codemirror/mode/javascript/javascript'
   import 'codemirror/mode/ruby/ruby'
+  import marked from 'marked'
   import {onMount} from 'svelte'
   import { quintInOut } from 'svelte/easing'
   import { tweened } from 'svelte/motion'
+  import { fly, fade } from 'svelte/transition'
 
   const scrollX = tweened(0, {duration: 800, easing: quintInOut})
   const scrollY = tweened(0, {duration: 800, easing: quintInOut})
 
+  let current = null
   let language = 'javascript'
   let theme = 'light'
-  const code = {
-      javascript:
+  const code =
 `function add(a, b) {
   return a + b
 }
@@ -36,32 +38,7 @@ function double(a) {
 
 function triple(a) {
   return multiply(a, 3)
-}`,
-      ruby:
-`def add(a, b)
-  a + b
-end
-
-def subtract(a, b)
-  a - b
-end
-
-def multiple(a, b)
-  a * b
-end
-
-def divide(a, b)
-  a / b
-end
-
-def double(a)
-  multiply(a, 2)
-end
-
-def triple(a)
-  multiply(a, 3)
-end`
-}
+}`
   let editorElement
   let editor
   let marks = []
@@ -69,11 +46,13 @@ end`
   let steps = [
     {
       type: 'scroll',
-      y: 200
+      y: 200,
+      caption: 'scrolling down'
     },
     {
       type: 'scroll',
-      y: -200
+      y: -200,
+      caption: 'scrolling up'
     },
     {
       type: 'selection',
@@ -98,11 +77,13 @@ end`
     },
     {
       type: 'add',
+      caption: 'adding text',
       start: {line: 3, ch: 0},
       text: '// adding text in one shot',
     },
     {
       type: 'add',
+      caption: 'adding more text',
       start: {line: 3, ch: 27},
       text: '\n',
     },
@@ -169,7 +150,7 @@ end`
 
     editor = CodeMirror(editorElement, {
       mode: language,
-      value: code[language],
+      value: code,
       lineNumbers: true
     })
   }
@@ -187,10 +168,11 @@ end`
   function playback() {
     marks = []
     // set starting point to original code
-    editor.setValue(code[language])
+    editor.setValue(code)
 
     steps.forEach((step, i) => {
       setTimeout(() => {
+        current = step
         switch (step.type) {
           case "scroll":
             if (step.x) $scrollX = step.x
@@ -291,6 +273,15 @@ end`
 <div class="container">
   <Screen>
     <div class="editor" bind:this={editorElement}/>
+    <div class="annotation-container">
+      {#if current && current.caption}
+        {#key current.caption}
+          <div class="text" in:fly={{y:20, duration: 200}} out:fade={{x:40, duration: 200}}>
+            {@html marked(current.caption)}
+          </div>
+        {/key}
+      {/if}
+    </div>
   </Screen>
 </div>
 
@@ -316,6 +307,24 @@ end`
   }
   .container {
     max-width: 800px;
+  }
+  .annotation-container {
+    display: flex;
+    justify-content: center;
+  }
+  .annotation-container .text {
+    margin-top: -40px;
+    z-index: 100;
+    position: absolute;
+    background: #ccc;
+    padding: 5px;
+    border-radius: 3px;
+    box-shadow: 1px 1px white;
+    font-family: sans-serif;
+    font-size: 0.8rem;
+  }
+  :global(.annotation-container .text > p) {
+    margin: 0;
   }
   :global(.removing), :global(.removing span) {
     background: #ffd0d0;

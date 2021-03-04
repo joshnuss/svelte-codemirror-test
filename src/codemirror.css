@@ -209,6 +209,7 @@ div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #a22;}
   bottom: 0; left: 0;
   overflow-y: hidden;
   overflow-x: scroll;
+  height: 8px;
 }
 .CodeMirror-scrollbar-filler {
   right: 0; bottom: 0;
