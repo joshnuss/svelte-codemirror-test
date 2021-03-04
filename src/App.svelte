@@ -213,12 +213,14 @@ function triple(a) {
 
           case "add":
             editor.setCursor(step.start)
+            clearMarks()
             if (step.typewriter) {
               addNextLetter(step, 0)
             }
             else {
               editor.replaceSelection(step.text)
-              editor.markText(step.start, {ch: step.start.ch + step.text.length, line: step.start.line}, {className: 'adding'})
+              const lines = step.text.split("\n").length
+              editor.markText(step.start, {ch: step.start.ch + step.text.length, line: step.start.line + lines - 1}, {className: 'adding'})
 
               setTimeout(() => {
                 clearMarks()
@@ -227,24 +229,31 @@ function triple(a) {
             }
             break
         }
-      }, i*1000)
+      }, i*3000)
     })
 
     setTimeout(() => {
+      current = null
       editor.setCursor(0)
       clearMarks()
-    }, steps.length * 1000)
+    }, steps.length * 3000)
   }
 
   function addNextLetter(step, index) {
     clearMarks()
+    const letter = step.text[index]
+    const line = step.start.line + step.text.substr(index).split("\n").length
 
-    editor.setCursor({ch: step.start.ch + index, line: step.start.line})
-    editor.replaceSelection(step.text[index])
-    editor.markText(step.start, {ch: step.start.ch + index + 1, line: step.start.line}, {className: 'adding'})
+    editor.setCursor({ch: step.start.ch + index, line})
+    if (letter == "\n") {
+      editor.execCommand('newlineAndIndent')
+    } else {
+      editor.replaceSelection(letter)
+    }
+    editor.markText(step.start, {ch: step.start.ch + index + 1, line}, {className: 'adding'})
 
     if (index < step.text.length-1) {
-      setTimeout(() => addNextLetter(step, index + 1), 600/step.text.length)
+      setTimeout(() => addNextLetter(step, index + 1), 10/step.text.length)
     } else {
       setTimeout(() => clearMarks(), 400)
     }
