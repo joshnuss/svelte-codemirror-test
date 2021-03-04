@@ -4,10 +4,11 @@
   import 'codemirror/mode/javascript/javascript'
   import 'codemirror/mode/ruby/ruby'
   import {onMount} from 'svelte'
+  import { quintInOut } from 'svelte/easing'
   import { tweened } from 'svelte/motion'
 
-  const scrollX = tweened(0, {duration: 800})
-  const scrollY = tweened(0, {duration: 800})
+  const scrollX = tweened(0, {duration: 800, easing: quintInOut})
+  const scrollY = tweened(0, {duration: 800, easing: quintInOut})
 
   let language = 'javascript'
   let theme = 'light'
@@ -72,11 +73,7 @@ end`
     },
     {
       type: 'scroll',
-      y: 30
-    },
-    {
-      type: 'scroll',
-      y: 0
+      y: -200
     },
     {
       type: 'selection',
