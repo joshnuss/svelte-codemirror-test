@@ -276,6 +276,7 @@ function triple(a) {
       }
     } else {
       setTimeout(() => {
+        if (current) dispatchEvent("stepend", current)
         stepIndex = null
         current = null
         clearMarks()
@@ -344,7 +345,7 @@ function triple(a) {
 
 <div class="container">
   <Screen title="Example.svelte">
-    <div class="editor" bind:this={editorElement} on:stepstart={stepStart} on:stepend={stepEnd} on:timelinestart={timelineStart} on:timelineEnd={timelineEnd}/>
+    <div class="editor" bind:this={editorElement} on:stepstart={stepStart} on:stepend={stepEnd} on:timelinestart={timelineStart} on:timelineend={timelineEnd}/>
     <div class="annotation-container">
       {#key stepIndex}
         {#if current && current.caption}
