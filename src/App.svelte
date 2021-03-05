@@ -3,6 +3,7 @@
   import CodeMirror from 'codemirror'
   import 'codemirror/mode/javascript/javascript'
   import 'codemirror/mode/ruby/ruby'
+  import 'codemirror/mode/htmlmixed/htmlmixed'
   import marked from 'marked'
   import {onMount} from 'svelte'
   import { quintInOut, elasticInOut } from 'svelte/easing'
@@ -14,9 +15,10 @@
   let scrollY
 
   let current = null
+  let stepIndex = null
   let language = 'javascript'
   let theme = 'light'
-  const code =
+  let code =
 `function add(a, b) {
   return a + b
 }
@@ -91,7 +93,7 @@ function triple(a) {
       type: 'add',
       caption: 'adding more text',
       start: {line: 3, ch: 27},
-      duration: 0,
+      duration: 1000,
       text: '\n',
     },
     {
@@ -157,6 +159,10 @@ function triple(a) {
     editor = CodeMirror(editorElement, {
       mode: language,
       value: code,
+      smartIndent: false,
+      tabSize: 2,
+      electricChars: false,
+      workTime: 50,
       lineNumbers: true
     })
   }
@@ -181,6 +187,8 @@ function triple(a) {
       dispatchEvent("stepend", current)
     }
 
+    clearMarks()
+    stepIndex = index
     current = steps[index]
     const duration = current.duration || 1000
 
@@ -230,17 +238,18 @@ function triple(a) {
         }
         else {
           editor.setCursor(current.start)
-
-          setTimeout(() => {
-            clearMarks()
-            editor.setSelection(current.start, end)
-            editor.replaceSelection("")
-          }, duration)
         }
+
+        setTimeout(() => {
+          clearMarks()
+          editor.setSelection(current.start, end)
+          editor.replaceSelection("")
+        }, duration)
         break
 
       case "add":
         editor.setCursor(current.start)
+        editor.setSelection(current.start)
         clearMarks()
         if (current.typewriter) {
           addNextLetter(current, 0)
@@ -249,21 +258,26 @@ function triple(a) {
           editor.replaceSelection(current.text)
           const lines = current.text.split("\n").length
           editor.markText(current.start, {ch: current.start.ch + current.text.length, line: current.start.line + lines - 1}, {className: 'adding'})
-
-          setTimeout(() => {
-            clearMarks()
-            editor.setSelection(current.start)
-          }, duration)
         }
+        setTimeout(() => {
+          clearMarks()
+          editor.setCursor(editor.posFromIndex(editor.indexFromPos(current.start) + current.text.length))
+        }, duration)
         break
     }
 
     if (index < steps.length-1) {
-      setTimeout(() => nextStep(index + 1), duration+(current.pause || 0))
+      const time = duration+(current.pause || 0)
+
+      if (time > 0) {
+        setTimeout(() => nextStep(index + 1), time)
+      } else {
+        nextStep(index+1)
+      }
     } else {
       setTimeout(() => {
+        stepIndex = null
         current = null
-        editor.setCursor(0)
         clearMarks()
         dispatchEvent("timelineend")
       }, (duration + (current.pause || 0)))
@@ -284,19 +298,15 @@ function triple(a) {
     clearMarks()
     const letter = step.text[index]
     const line = step.start.line + step.text.substr(index).split("\n").length
+    const pos = editor.posFromIndex(editor.indexFromPos(step.start) + index)
 
-    editor.setCursor({ch: step.start.ch + index, line})
-
-    if (letter == "\n") {
-      editor.execCommand('newlineAndIndent')
-    } else {
-      editor.replaceSelection(letter)
-    }
-    // TODO: wrong `ch` when mutliple lines, doesn't take into account "\n"
-    editor.markText(step.start, {ch: step.start.ch + index + 1, line}, {className: 'adding'})
+    editor.setCursor(pos)
+    editor.replaceSelection(letter)
+    editor.markText(step.start, editor.posFromIndex(editor.indexFromPos(pos) +1), {className: 'adding'})
 
     if (index < step.text.length-1) {
-      setTimeout(() => addNextLetter(step, index + 1), (((step.duration || 1000)-100)/step.text.length))
+      /* setTimeout(() => addNextLetter(step, index + 1), ((step.duration || 1000)/step.text.length)) */
+      setTimeout(() => addNextLetter(step, index + 1), 10)
     }
   }
 
@@ -333,16 +343,16 @@ function triple(a) {
 </script>
 
 <div class="container">
-  <Screen>
+  <Screen title="Example.svelte">
     <div class="editor" bind:this={editorElement} on:stepstart={stepStart} on:stepend={stepEnd} on:timelinestart={timelineStart} on:timelineEnd={timelineEnd}/>
     <div class="annotation-container">
-      {#if current && current.caption}
-        {#key current.caption}
+      {#key stepIndex}
+        {#if current && current.caption}
           <div class="text" in:fly={{y:20, duration: 200}} out:fade={{x:40, duration: 200}}>
             {@html marked(current.caption)}
           </div>
-        {/key}
-      {/if}
+        {/if}
+      {/key}
     </div>
   </Screen>
 </div>
@@ -351,7 +361,7 @@ function triple(a) {
 <button on:click={playback} class="play">Playback</button>
 
 <select bind:value={language} on:change={createEditor}>
-  {#each ['javascript', 'ruby'] as lang}
+  {#each ['javascript', 'ruby', 'htmlmixed'] as lang}
     <option>{lang}</option>
   {/each}
 </select>
@@ -365,10 +375,10 @@ function triple(a) {
 
 <style>
   .editor {
-    font-size: 1.2rem;
+    font-size: 1rem;
   }
   .container {
-    max-width: 800px;
+    max-width: 600px;
   }
   .annotation-container {
     display: flex;
@@ -387,11 +397,5 @@ function triple(a) {
   }
   :global(.annotation-container .text > p) {
     margin: 0;
-  }
-  :global(.removing), :global(.removing span) {
-    background: #ffd0d0;
-  }
-  :global(.adding), :global(.adding span) {
-    background: #b6ffb6;
   }
 </style>
