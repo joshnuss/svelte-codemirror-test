@@ -5,12 +5,13 @@
   import 'codemirror/mode/ruby/ruby'
   import marked from 'marked'
   import {onMount} from 'svelte'
-  import { quintInOut } from 'svelte/easing'
+  import { quintInOut, elasticInOut } from 'svelte/easing'
   import { tweened } from 'svelte/motion'
+  import { get, derived } from 'svelte/store'
   import { fly, fade } from 'svelte/transition'
 
-  const scrollX = tweened(0, {duration: 800, easing: quintInOut})
-  const scrollY = tweened(0, {duration: 800, easing: quintInOut})
+  let scrollX
+  let scrollY
 
   let current = null
   let language = 'javascript'
@@ -47,16 +48,21 @@ function triple(a) {
     {
       type: 'scroll',
       y: 200,
-      caption: 'scrolling down'
+      caption: 'scrolling down',
+      duration: 2000,
+      pause: 500,
     },
     {
       type: 'scroll',
       y: -200,
-      caption: 'scrolling up'
+      caption: 'scrolling up',
+      pause: 500,
     },
     {
       type: 'selection',
       css: 'background: purple; color:white;',
+      caption: 'selecting stuff',
+      duration: 2000,
       selections: [
         {start: {line: 0, ch: 13}, end: {line: 0, ch: 14}},
         {start: {line: 1, ch: 9}, end: {line: 1, ch: 10}},
@@ -85,23 +91,27 @@ function triple(a) {
       type: 'add',
       caption: 'adding more text',
       start: {line: 3, ch: 27},
+      duration: 0,
       text: '\n',
     },
     {
       type: 'add',
       start: {line: 4, ch: 0},
       text: '// adding text with typewriter',
+      duration: 2000,
       typewriter: true
     },
     {
       type: 'add',
       start: {line: 4, ch: 30},
+      duration: 0,
       text: '\n',
     },
     {
       type: 'add',
       start: {line: 5, ch: 0},
       text: 'let syntaxHighlight = true // yay!',
+      duration: 400,
       typewriter: true
     },
     {
@@ -132,10 +142,6 @@ function triple(a) {
   onMount(() => {
     createEditor()
   })
-
-  $: if (editor) {
-    editor.scrollTo($scrollX, $scrollY)
-  }
 
   $: {
     const classList = document.body.classList
@@ -170,6 +176,100 @@ function triple(a) {
     editorElement.dispatchEvent(event)
   }
 
+  function nextStep(index) {
+    if (current) {
+      dispatchEvent("stepend", current)
+    }
+
+    current = steps[index]
+    const duration = current.duration || 1000
+
+    dispatchEvent("stepstart", current)
+
+    switch (current.type) {
+      case "scroll":
+        let lastX = scrollX ? get(scrollX) : 0
+        let lastY = scrollY ? get(scrollY) : 0
+
+        scrollX = tweened(lastX, {duration, easing: elasticInOut})
+        scrollY = tweened(lastY, {duration, easing: elasticInOut})
+
+        scroll = derived([scrollX, scrollY], ([$scrollX, $scrollY], set) => {
+          set({x: $scrollX, y: $scrollY})
+        })
+
+        scroll.subscribe(({x, y}) => {
+          editor.scrollTo(x, y)
+        })
+
+        if (current.x) scrollX.set(current.x)
+        if (current.y) scrollY.set(current.y)
+
+        break
+      case "selection":
+        clearMarks()
+        if (current.selections) {
+          current.selections.forEach(selection => {
+            editor.markText(selection.start, selection.end, {css: current.css, className: current.class})
+          })
+        } else  {
+          editor.setSelection(current.start, current.end)
+
+          if (current.css || current.class) {
+            editor.markText(current.start, current.end, {css: current.css, className: current.class})
+          }
+        }
+        break
+      case "remove":
+        const end = {line: current.start.line, ch: current.start.ch + current.length}
+        editor.markText(current.start, end, {className: 'removing'})
+
+        if (current.typewriter) {
+          editor.setCursor(end)
+          removeNextLetter(current, current.length)
+        }
+        else {
+          editor.setCursor(current.start)
+
+          setTimeout(() => {
+            clearMarks()
+            editor.setSelection(current.start, end)
+            editor.replaceSelection("")
+          }, duration)
+        }
+        break
+
+      case "add":
+        editor.setCursor(current.start)
+        clearMarks()
+        if (current.typewriter) {
+          addNextLetter(current, 0)
+        }
+        else {
+          editor.replaceSelection(current.text)
+          const lines = current.text.split("\n").length
+          editor.markText(current.start, {ch: current.start.ch + current.text.length, line: current.start.line + lines - 1}, {className: 'adding'})
+
+          setTimeout(() => {
+            clearMarks()
+            editor.setSelection(current.start)
+          }, duration)
+        }
+        break
+    }
+
+    if (index < steps.length-1) {
+      setTimeout(() => nextStep(index + 1), duration+(current.pause || 0))
+    } else {
+      setTimeout(() => {
+        current = null
+        editor.setCursor(0)
+        clearMarks()
+        dispatchEvent("timelineend")
+      }, (duration + (current.pause || 0)))
+    }
+  }
+
   function playback() {
     marks = []
     // set starting point to original code
@@ -177,81 +277,7 @@ function triple(a) {
 
     dispatchEvent("timelinestart")
 
-    steps.forEach((step, i) => {
-      setTimeout(() => {
-        if (current) {
-          dispatchEvent("stepend", step)
-        }
-
-        current = step
-
-        dispatchEvent("stepstart", step)
-
-        switch (step.type) {
-          case "scroll":
-            if (step.x) $scrollX = step.x
-            if (step.y) $scrollY = step.y
-            break
-          case "selection":
-            clearMarks()
-            if (step.selections) {
-              step.selections.forEach(selection => {
-                editor.markText(selection.start, selection.end, {css: step.css, className: step.class})
-              })
-            } else  {
-              editor.setSelection(step.start, step.end)
-
-              if (step.css || step.class) {
-                editor.markText(step.start, step.end, {css: step.css, className: step.class})
-              }
-            }
-            break
-          case "remove":
-            const end = {line: step.start.line, ch: step.start.ch + step.length}
-            editor.markText(step.start, end, {className: 'removing'})
-
-            if (step.typewriter) {
-              editor.setCursor(end)
-              removeNextLetter(step, step.length)
-            }
-            else {
-              editor.setCursor(step.start)
-
-              setTimeout(() => {
-                clearMarks()
-                editor.setSelection(step.start, end)
-                editor.replaceSelection("")
-              }, 700)
-            }
-            break
-
-          case "add":
-            editor.setCursor(step.start)
-            clearMarks()
-            if (step.typewriter) {
-              addNextLetter(step, 0)
-            }
-            else {
-              editor.replaceSelection(step.text)
-              const lines = step.text.split("\n").length
-              editor.markText(step.start, {ch: step.start.ch + step.text.length, line: step.start.line + lines - 1}, {className: 'adding'})
-
-              setTimeout(() => {
-                clearMarks()
-                editor.setSelection(step.start)
-              }, 700)
-            }
-            break
-        }
-      }, i*3000)
-    })
-
-    setTimeout(() => {
-      current = null
-      editor.setCursor(0)
-      clearMarks()
-      dispatchEvent("timelineend")
-    }, steps.length * 3000)
+    nextStep(0)
   }
 
   function addNextLetter(step, index) {
@@ -260,17 +286,17 @@ function triple(a) {
     const line = step.start.line + step.text.substr(index).split("\n").length
 
     editor.setCursor({ch: step.start.ch + index, line})
+
     if (letter == "\n") {
       editor.execCommand('newlineAndIndent')
     } else {
       editor.replaceSelection(letter)
     }
+    // TODO: wrong `ch` when mutliple lines, doesn't take into account "\n"
     editor.markText(step.start, {ch: step.start.ch + index + 1, line}, {className: 'adding'})
 
     if (index < step.text.length-1) {
-      setTimeout(() => addNextLetter(step, index + 1), 10/step.text.length)
-    } else {
-      setTimeout(() => clearMarks(), 400)
+      setTimeout(() => addNextLetter(step, index + 1), (((step.duration || 1000)-100)/step.text.length))
     }
   }
 
@@ -281,9 +307,7 @@ function triple(a) {
     editor.markText(step.start, {ch: step.start.ch + index - 1, line: step.start.line}, {className: 'removing'})
 
     if (index > 1) {
-      setTimeout(() => removeNextLetter(step, index - 1), 600/step.length)
-    } else {
-      setTimeout(() => clearMarks(), 400)
+      setTimeout(() => removeNextLetter(step, index - 1), (step.duration || 1000)/step.length)
     }
   }
 
