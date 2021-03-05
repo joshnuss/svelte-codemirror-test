@@ -2,13 +2,15 @@
 body.light-theme {
   --background-color: white;
   --medium-color: #ccc;
+  --shadow-color: #ccc8;
   --text-color: #222;
   --cursor-color: #7e7;
-  --border-color: #ccc;
+  --border-color: #ddd;
 }
 body.dark-theme {
   --background-color: #222;
   --medium-color: #555;
+  --shadow-color: #5554;
   --text-color: white;
   --cursor-color: #7e7;
   --border-color: #666;
@@ -29,4 +31,17 @@ button, select {
 
 button {
   cursor: pointer;
+}
+
+.light-theme .removing, .light-theme .removing span {
+  background: #ffd0d0;
+}
+.dark-theme .adding, .dark-theme .adding span {
+  background: #b6ffb6;
+}
+.dark-theme .removing, .dark-theme .removing span {
+  background: #ffd0d0b0;
+}
+.light-theme .adding, .light-theme .adding span {
+  background: #b6ffb6b0;
 }

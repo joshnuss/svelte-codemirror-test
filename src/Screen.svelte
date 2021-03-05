@@ -15,19 +15,33 @@
 <style>
   .terminal {
 		font-family: monospace;
-		font-size: 1.5rem;
-    border: solid 2px var(--border-color);
+		font-size: 1.2rem;
+    border: solid 1px var(--border-color);
 		padding: 1rem;
 		margin: 5rem;
 		border-radius: 0.5rem;
     min-height: 20rem;
     background: var(--background-color);
-		box-shadow: 2px 2px var(--medium-color);
+		box-shadow: 2px 2px var(--shadow-color);
     color: var(--text-color);
     position: relative;
 	}
 
 	.terminal .bar {
+    font-family: Inter;
 		margin-bottom: 1rem;
+    display: flex;
+    justify-content: center;
+    place-items: center;
+    align-items: center;
 	}
+
+  .buttons {
+    position: absolute;
+  }
+
+  .title {
+    font-size: 0.8rem;
+    color: var(--text-color);
+  }
 </style>
