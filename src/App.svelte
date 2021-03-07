@@ -141,9 +141,17 @@ function triple(a) {
     }
   ]
 
+  let jsonTimeline = JSON.stringify(steps, null, 2)
+
   onMount(() => {
     createEditor()
   })
+
+  $: {
+    try {
+      steps = JSON.parse(jsonTimeline)
+    } catch {}
+  }
 
   $: {
     const classList = document.body.classList
@@ -372,7 +380,12 @@ function triple(a) {
   <option>dark</option>
 </select>
 
-<pre>steps = {JSON.stringify(steps, null, 2)}</pre>
+<div class="timeline">
+  <label>
+    Steps:<br/>
+    <textarea class="timeline" bind:value={jsonTimeline}/>
+  </label>
+</div>
 
 <style>
   .editor {
@@ -398,5 +411,17 @@ function triple(a) {
   }
   :global(.annotation-container .text > p) {
     margin: 0;
+  }
+
+  .timeline {
+    margin-top: 5px;
+    width: 100%;
+    display: block;
+  }
+
+  .timeline textarea {
+    min-height: 400px;
+    width: 100%;
+    display: block;
   }
 </style>
