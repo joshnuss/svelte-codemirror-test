@@ -5,15 +5,17 @@
   import 'codemirror/mode/ruby/ruby'
   import 'codemirror/mode/htmlmixed/htmlmixed'
   import marked from 'marked'
-  import {onMount} from 'svelte'
+  import {onMount, onDestroy} from 'svelte'
   import { quintInOut, elasticInOut } from 'svelte/easing'
   import { tweened } from 'svelte/motion'
   import { get, derived } from 'svelte/store'
   import { fly, fade } from 'svelte/transition'
+  import * as easingFns from 'svelte/easing'
 
   let scrollX
   let scrollY
 
+  let tween, cleanup
   let current = null
   let stepIndex = null
   let language = 'javascript'
@@ -141,10 +143,75 @@ function triple(a) {
     }
   ]
 
+  code = ''
+  language = 'htmlmixed'
+  steps = [
+    {
+      type: 'add',
+      text: "<script>\n</" + "script>",
+      start: {line: 0, ch: 0},
+      end: {line: 1, ch: 10},
+      typewriter: true,
+      duration: 1000,
+      easing: 'elasticInOut',
+      pause: 500,
+      caption: 'add a **\\<script\\>** tag'
+    },
+    {
+      type: 'add',
+      text: "\n  ",
+      start: {line: 0, ch: 9},
+      typewriter: false,
+      duration: 100,
+      caption: '',
+    },
+    {
+      type: 'add',
+      text: "let name = 'Josh'",
+      start: {line: 1, ch: 2},
+      typewriter: true,
+      duration: 200,
+      easing: 'sineIn',
+      pause: 500,
+      caption: 'declare a **variable**'
+    },
+    {
+      type: 'add',
+      text: "\n\n",
+      start: {line: 2, ch: 9},
+      typewriter: true,
+      duration: 100,
+    },
+    {
+      type: 'add',
+      text: "<h1>Hello {name}!</h1>",
+      start: {line: 4, ch: 0},
+      typewriter: true,
+      duration: 200,
+      easing: 'sineIn',
+      pause: 500,
+      caption: '**declare** a binding'
+    },
+    {
+      type: 'add',
+      text: "\n\n<style" + ">\n  h1 { color: red }\n<" + "/style>",
+      start: {line: 4, ch: 23},
+      typewriter: true,
+      duration: 200,
+      easing: 'sineIn',
+      pause: 500,
+      caption: '**style** the `<h1>` tag'
+    },
+  ]
+
   let jsonTimeline = JSON.stringify(steps, null, 2)
 
   onMount(() => {
     createEditor()
+  })
+
+  onDestroy(() => {
+    if (cleanup) cleanup()
   })
 
   $: {
@@ -170,7 +237,7 @@ function triple(a) {
       smartIndent: false,
       tabSize: 2,
       electricChars: false,
-      workTime: 50,
+      workTime: 10,
       lineNumbers: true
     })
   }
@@ -260,7 +327,7 @@ function triple(a) {
         editor.setSelection(current.start)
         clearMarks()
         if (current.typewriter) {
-          addNextLetter(current, 0)
+          setupTween(current.text.length, type)
         }
         else {
           editor.replaceSelection(current.text)
@@ -303,20 +370,60 @@ function triple(a) {
     nextStep(0)
   }
 
-  function addNextLetter(step, index) {
+  function setupTween(steps, fn) {
+    if (cleanup) cleanup()
+
+    const duration = (current.duration || 1000) + (current.pause||0) - 200
+    const easingFn = current.easing || 'linear'
+    const easing = easingFns[easingFn]
+    let last = -1, index, delta
+
+    tween = tweened(0, {duration, easing})
+
+    cleanup = tween.subscribe(float => {
+      if (float < 0) float = 0
+      if (float > steps-1) float = steps-1
+
+      index = parseInt(float)
+      delta = index - last
+
+      if (index != last) {
+        fn({index, delta})
+      }
+      last = index
+    })
+
+    tween.set(steps-1)
+  }
+
+  function type({index, delta}) {
+    if (index > current.text.length || index < 0)
+      return
+
     clearMarks()
-    const letter = step.text[index]
-    const line = step.start.line + step.text.substr(index).split("\n").length
-    const pos = editor.posFromIndex(editor.indexFromPos(step.start) + index)
 
-    editor.setCursor(pos)
-    editor.replaceSelection(letter)
-    editor.markText(step.start, editor.posFromIndex(editor.indexFromPos(pos) +1), {className: 'adding'})
+    let endPos
 
-    if (index < step.text.length-1) {
-      /* setTimeout(() => addNextLetter(step, index + 1), ((step.duration || 1000)/step.text.length)) */
-      setTimeout(() => addNextLetter(step, index + 1), 10)
+    if (delta > 0) {
+      const addition = current.text.substr(index - delta + 1, delta)
+
+      const insertPos = editor.posFromIndex(editor.indexFromPos(current.start) + index - delta + 1)
+      editor.setCursor(insertPos)
+      editor.replaceSelection(addition)
+
+      endPos = editor.posFromIndex(editor.indexFromPos(current.start) + index + 1)
+    } else {
+      const delPos = editor.posFromIndex(editor.indexFromPos(current.start) + index - delta + 1)
+      editor.setCursor(delPos)
+
+      for (let i=0;i<-delta;i++) {
+        editor.execCommand('delCharBefore')
+      }
+      endPos = editor.posFromIndex(editor.indexFromPos(current.start) + index + 1)
     }
+
+    editor.markText(current.start, endPos, {className: 'adding'})
+    editor.setCursor(endPos)
   }
 
   function removeNextLetter(step, index) {
