@@ -14,6 +14,7 @@
     "svelte": "^3.31.2"
   },
   "devDependencies": {
+    "svelte-preview-ui": "^0.2.0",
     "@snowpack/app-scripts-svelte": "^1.9.2",
     "@snowpack/plugin-dotenv": "^2.0.5",
     "@snowpack/plugin-postcss": "^1.1.0",

@@ -1,5 +1,5 @@
 <script>
-  import Screen from './Screen.svelte'
+  import { Screen } from 'svelte-preview-ui'
   import CodeMirror from 'codemirror'
   import 'codemirror/mode/javascript/javascript'
   import 'codemirror/mode/ruby/ruby'
@@ -459,7 +459,7 @@ function triple(a) {
 </script>
 
 <div class="container">
-  <Screen title="Example.svelte">
+  <Screen title="Example.svelte" class="screen" contentClass="content">
     <div class="editor" bind:this={editorElement} on:stepstart={stepStart} on:stepend={stepEnd} on:timelinestart={timelineStart} on:timelineend={timelineEnd}/>
     <div class="annotation-container">
       {#key stepIndex}
@@ -530,5 +530,12 @@ function triple(a) {
     min-height: 400px;
     width: 100%;
     display: block;
+  }
+
+  :global(.screen) {
+    font-family: sans-serif;
+  }
+  :global(.content) {
+    font-family: monospace;
   }
 </style>
